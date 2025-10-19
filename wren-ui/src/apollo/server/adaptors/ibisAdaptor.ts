@@ -60,28 +60,61 @@ export interface IbisTrinoConnectionInfo {
 
 export interface IbisSnowflakeConnectionInfo {
   user: string;
-  password: string;
   account: string;
   database: string;
   schema: string;
+  password?: string;
+  privateKey?: string;
+  warehouse?: string;
 }
 
-export type IbisConnectionInfo =
-  | UrlBasedConnectionInfo
-  | HostBasedConnectionInfo
-  | IbisPostgresConnectionInfo
-  | IbisBigQueryConnectionInfo
-  | IbisTrinoConnectionInfo
-  | IbisSnowflakeConnectionInfo;
+export interface IbisAthenaConnectionInfo {
+  aws_access_key_id: string;
+  aws_secret_access_key: string;
+  region_name: string;
+  s3_staging_dir: string;
+  schema_name: string;
+}
+
+export enum IbisRedshiftConnectionType {
+  REDSHIFT = 'redshift',
+  REDSHIFT_IAM = 'redshift_iam',
+}
+
+interface IbisRedshiftPasswordAuth {
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  password: string;
+  redshift_type: IbisRedshiftConnectionType;
+}
+
+interface IbisRedshiftIAMAuth {
+  cluster_identifier: string;
+  user: string;
+  database: string;
+  region: string;
+  access_key_id: string;
+  access_key_secret: string;
+  redshift_type: IbisRedshiftConnectionType;
+}
+
+export type IbisRedshiftConnectionInfo =
+  | IbisRedshiftPasswordAuth
+  | IbisRedshiftIAMAuth;
 
 export enum SupportedDataSource {
   POSTGRES = 'POSTGRES',
   BIG_QUERY = 'BIG_QUERY',
   SNOWFLAKE = 'SNOWFLAKE',
   MYSQL = 'MYSQL',
+  ORACLE = 'ORACLE',
   MSSQL = 'MSSQL',
   CLICK_HOUSE = 'CLICK_HOUSE',
   TRINO = 'TRINO',
+  ATHENA = 'ATHENA',
+  REDSHIFT = 'REDSHIFT',
 }
 
 const dataSourceUrlMap: Record<SupportedDataSource, string> = {
@@ -89,9 +122,12 @@ const dataSourceUrlMap: Record<SupportedDataSource, string> = {
   [SupportedDataSource.BIG_QUERY]: 'bigquery',
   [SupportedDataSource.SNOWFLAKE]: 'snowflake',
   [SupportedDataSource.MYSQL]: 'mysql',
+  [SupportedDataSource.ORACLE]: 'oracle',
   [SupportedDataSource.MSSQL]: 'mssql',
   [SupportedDataSource.CLICK_HOUSE]: 'clickhouse',
   [SupportedDataSource.TRINO]: 'trino',
+  [SupportedDataSource.ATHENA]: 'athena',
+  [SupportedDataSource.REDSHIFT]: 'redshift',
 };
 
 export interface TableResponse {
@@ -515,6 +551,8 @@ export class IbisAdaptor implements IIbisAdaptor {
       e.response?.data ||
       e.message ||
       defaultMessage;
+
+    const errorData = e.response?.data;
     throw Errors.create(Errors.GeneralErrorCodes.IBIS_SERVER_ERROR, {
       customMessage: errorMessageBuilder
         ? errorMessageBuilder(customMessage)
@@ -523,6 +561,7 @@ export class IbisAdaptor implements IIbisAdaptor {
       other: {
         correlationId: e.response?.headers['x-correlation-id'],
         processTime: e.response?.headers['x-process-time'],
+        ...errorData,
       },
     });
   }

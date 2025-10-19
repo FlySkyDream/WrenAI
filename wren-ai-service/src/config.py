@@ -40,7 +40,9 @@ class Settings(BaseSettings):
     allow_intent_classification: bool = Field(default=True)
     allow_sql_generation_reasoning: bool = Field(default=True)
     allow_sql_functions_retrieval: bool = Field(default=True)
+    allow_sql_diagnosis: bool = Field(default=True)
     max_histories: int = Field(default=5)
+    max_sql_correction_retries: int = Field(default=3)
 
     # engine config
     engine_timeout: float = Field(default=30.0)

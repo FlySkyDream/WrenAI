@@ -12,6 +12,9 @@ import orjson
 import requests
 import sqlparse
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv(".env.dev", override=True)
 
 WREN_AI_SERVICE_BASE_URL = "http://localhost:5556"
 WREN_ENGINE_API_URL = "http://localhost:8080"
@@ -27,7 +30,7 @@ def _get_connection_info(data_source: str):
     elif data_source == "postgres":
         return {
             "host": os.getenv("postgres.host"),
-            "port": int(os.getenv("postgres.port")),
+            "port": os.getenv("postgres.port"),
             "database": os.getenv("postgres.database"),
             "user": os.getenv("postgres.user"),
             "password": os.getenv("postgres.password"),
